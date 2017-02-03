@@ -207,13 +207,13 @@ static void ensureJniRegistered(JNIEnv *env) {
   }
   sFieldsRegistered = true;
   jclass targetsInfoClass =
-      env->FindClass("com/team254/cheezdroid/NativePart$TargetsInfo");
+      env->FindClass("com/team3061/cheezdroid/NativePart$TargetsInfo");
   sNumTargetsField = env->GetFieldID(targetsInfoClass, "numTargets", "I");
   sTargetsField = env->GetFieldID(
       targetsInfoClass, "targets",
-      "[Lcom/team254/cheezdroid/NativePart$TargetsInfo$Target;");
+      "[Lcom/team3061/cheezdroid/NativePart$TargetsInfo$Target;");
   jclass targetClass =
-      env->FindClass("com/team254/cheezdroid/NativePart$TargetsInfo$Target");
+      env->FindClass("com/team3061/cheezdroid/NativePart$TargetsInfo$Target");
 
   sCentroidXField = env->GetFieldID(targetClass, "centroidX", "D");
   sCentroidYField = env->GetFieldID(targetClass, "centroidY", "D");

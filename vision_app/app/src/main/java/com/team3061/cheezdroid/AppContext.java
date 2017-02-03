@@ -1,4 +1,4 @@
-package com.team254.cheezdroid;
+package com.team3061.cheezdroid;
 
 import android.app.Application;
 import android.content.Context;
@@ -6,7 +6,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.PowerManager;
 
-import com.team254.cheezdroid.comm.RobotConnection;
+import com.team3061.cheezdroid.comm.RobotConnection;
 
 import java.util.Arrays;
 

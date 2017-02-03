@@ -1,10 +1,10 @@
-package com.team254.cheezdroid;
+package com.team3061.cheezdroid;
 
-import com.team254.cheezdroid.comm.CameraTargetInfo;
-import com.team254.cheezdroid.comm.RobotConnection;
-import com.team254.cheezdroid.comm.VisionUpdate;
-import com.team254.cheezdroid.comm.messages.TargetUpdateMessage;
-import com.team254.cheezdroid.comm.messages.VisionMessage;
+import com.team3061.cheezdroid.comm.CameraTargetInfo;
+import com.team3061.cheezdroid.comm.RobotConnection;
+import com.team3061.cheezdroid.comm.VisionUpdate;
+import com.team3061.cheezdroid.comm.messages.TargetUpdateMessage;
+import com.team3061.cheezdroid.comm.messages.VisionMessage;
 
 import org.opencv.android.BetterCamera2Renderer;
 import org.opencv.android.BetterCameraGLSurfaceView;

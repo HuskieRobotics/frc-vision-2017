@@ -1,4 +1,4 @@
-package com.team254.cheezdroid;
+package com.team3061.cheezdroid;
 
 import android.app.admin.DeviceAdminReceiver;
 import android.content.ComponentName;

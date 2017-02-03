@@ -1,4 +1,4 @@
-package com.team254.cheezdroid.comm.messages;
+package com.team3061.cheezdroid.comm.messages;
 
 public class HeartbeatMessage extends VisionMessage {
 

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.team254.cheezdroid;
+package com.team3061.cheezdroid;
 
 import android.content.Context;
 import android.util.AttributeSet;

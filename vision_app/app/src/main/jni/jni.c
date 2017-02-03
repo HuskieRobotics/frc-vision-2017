@@ -1,6 +1,6 @@
 #include "image_processor.h"
 
-JNIEXPORT void JNICALL Java_com_team254_cheezdroid_NativePart_processFrame(
+JNIEXPORT void JNICALL Java_com_team3061_cheezdroid_NativePart_processFrame(
     JNIEnv *env,
     jclass cls,
     jint tex1,

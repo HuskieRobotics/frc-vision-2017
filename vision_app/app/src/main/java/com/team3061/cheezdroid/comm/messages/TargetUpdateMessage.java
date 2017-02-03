@@ -1,6 +1,6 @@
-package com.team254.cheezdroid.comm.messages;
+package com.team3061.cheezdroid.comm.messages;
 
-import com.team254.cheezdroid.comm.VisionUpdate;
+import com.team3061.cheezdroid.comm.VisionUpdate;
 
 public class TargetUpdateMessage extends VisionMessage {
 

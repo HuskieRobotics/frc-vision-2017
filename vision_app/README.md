@@ -8,7 +8,7 @@ Android-based Vision System
 
 * Enable device owner
 1. adb shell
-2. dpm set-device-owner com.team254.cheezdroid/.ChezyDeviceAdminReceiver
+2. dpm set-device-owner com.team3061.cheezdroid/.ChezyDeviceAdminReceiver
 
 ## How to Install ADB on the RoboRIO
 
