@@ -24,6 +24,7 @@ struct TargetInfo {
   double width;
   double height;
   std::vector<cv::Point> points;
+  std::vector<cv::Point> contour;
 };
 
 std::vector<TargetInfo> processImpl(int w, int h, int texOut, DisplayMode mode,
@@ -39,20 +40,21 @@ std::vector<TargetInfo> processImpl(int w, int h, int texOut, DisplayMode mode,
   // read
   t = getTimeMs();
   glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, input.data);
-  LOGD("glReadPixels() costs %d ms", getTimeInterval(t));
+  //LOGD("glReadPixels() costs %d ms", getTimeInterval(t));
 
-  // modify
+  // modify color scales
   t = getTimeMs();
   static cv::Mat hsv;
   cv::cvtColor(input, hsv, CV_RGBA2RGB);
   cv::cvtColor(hsv, hsv, CV_RGB2HSV);
-  LOGD("cvtColor() costs %d ms", getTimeInterval(t));
+  //LOGD("cvtColor() costs %d ms", getTimeInterval(t));
 
+  //Threshold image
   t = getTimeMs();
   static cv::Mat thresh;
   cv::inRange(hsv, cv::Scalar(h_min, s_min, v_min),
               cv::Scalar(h_max, s_max, v_max), thresh);
-  LOGD("inRange() costs %d ms", getTimeInterval(t));
+  //LOGD("inRange() costs %d ms", getTimeInterval(t));
 
   t = getTimeMs();
   static cv::Mat contour_input;
@@ -62,15 +64,16 @@ std::vector<TargetInfo> processImpl(int w, int h, int texOut, DisplayMode mode,
   std::vector<cv::Point> poly;
   std::vector<TargetInfo> targets;
   std::vector<TargetInfo> rejected_targets;
-  cv::findContours(contour_input, contours, cv::RETR_EXTERNAL,
+  cv::findContours(contour_input, contours, cv::RETR_EXTERNAL, //Find all extreme (outer) contours, save in contours.
                    cv::CHAIN_APPROX_TC89_KCOS);
   for (auto &contour : contours) {
     convex_contour.clear();
-    cv::convexHull(contour, convex_contour, false);
+    cv::convexHull(contour, convex_contour, false); //Find the convex hull of the contour.
     poly.clear();
     cv::approxPolyDP(convex_contour, poly, 20, true);
     if (poly.size() == 4 && cv::isContourConvex(poly)) {
       TargetInfo target;
+      target.contour = contour;
       int min_x = std::numeric_limits<int>::max();
       int max_x = std::numeric_limits<int>::min();
       int min_y = std::numeric_limits<int>::max();
@@ -98,9 +101,9 @@ std::vector<TargetInfo> processImpl(int w, int h, int texOut, DisplayMode mode,
       // Filter based on size
       // Keep in mind width/height are in imager terms...
       const double kMinTargetWidth = 20;
-      const double kMaxTargetWidth = 300;
+      const double kMaxTargetWidth = 150;
       const double kMinTargetHeight = 10;
-      const double kMaxTargetHeight = 100;
+      const double kMaxTargetHeight = 150;
       if (target.width < kMinTargetWidth || target.width > kMaxTargetWidth ||
           target.height < kMinTargetHeight ||
           target.height > kMaxTargetHeight) {
@@ -108,7 +111,7 @@ std::vector<TargetInfo> processImpl(int w, int h, int texOut, DisplayMode mode,
         rejected_targets.push_back(std::move(target));
         continue;
       }
-      // Filter based on shape
+      /* // Filter based on shape
       const double kNearlyHorizontalSlope = 1 / 1.25;
       const double kNearlyVerticalSlope = 1.25;
       int num_nearly_horizontal_slope = 0;
@@ -133,11 +136,15 @@ std::vector<TargetInfo> processImpl(int w, int h, int texOut, DisplayMode mode,
           break;
         }
       }
+
       if (num_nearly_horizontal_slope != 2 && num_nearly_vertical_slope != 2) {
         LOGD("Rejecting target due to shape");
+        LOGD("num_nearly_horizontal_slope= %d, num_nearly_vertical_slope= %d", num_nearly_horizontal_slope, num_nearly_vertical_slope);
         rejected_targets.push_back(std::move(target));
         continue;
-      }
+      }//*/
+
+      /*
       // Filter based on fullness
       const double kMinFullness = .2;
       const double kMaxFullness = .5;
@@ -148,7 +155,7 @@ std::vector<TargetInfo> processImpl(int w, int h, int texOut, DisplayMode mode,
         LOGD("Rejected target due to fullness");
         rejected_targets.push_back(std::move(target));
         continue;
-      }
+      }//*/
 
       // We found a target
       LOGD("Found target at %.2lf, %.2lf...size %.2lf, %.2lf",
@@ -156,7 +163,7 @@ std::vector<TargetInfo> processImpl(int w, int h, int texOut, DisplayMode mode,
       targets.push_back(std::move(target));
     }
   }
-  LOGD("Contour analysis costs %d ms", getTimeInterval(t));
+  //LOGD("Contour analysis costs %d ms", getTimeInterval(t));
 
   // write back
   t = getTimeMs();
@@ -165,6 +172,23 @@ std::vector<TargetInfo> processImpl(int w, int h, int texOut, DisplayMode mode,
     vis = input;
   } else if (mode == DISP_MODE_THRESH) {
     cv::cvtColor(thresh, vis, CV_GRAY2RGBA);
+
+    cv::drawContours(vis, contours, -1,cv::Scalar(255, 127, 0), 2);
+
+
+    // Render the targets
+    for (auto &target : targets) {
+        cv::polylines(vis, target.points, true, cv::Scalar(0, 112, 255), 3);//Blueish
+        cv::circle(vis, cv::Point(target.centroid_x, target.centroid_y), 5,
+                   cv::Scalar(0, 112, 255), 3);
+    }
+    for (auto &target : rejected_targets) {
+        convex_contour.clear();
+        cv::convexHull(target.contour, convex_contour, false); //Find the convex hull of the contour.
+        cv::drawContours(vis, std::vector<std::vector<cv::Point> >(1,convex_contour), -1, cv::Scalar(255, 0, 0), 2);
+        //cv::polylines(vis, target.points, true, cv::Scalar(255, 0, 0), 2);//Red
+    }//*/
+
   } else {
     vis = input;
     // Render the targets
@@ -179,14 +203,14 @@ std::vector<TargetInfo> processImpl(int w, int h, int texOut, DisplayMode mode,
       cv::polylines(vis, target.points, true, cv::Scalar(255, 0, 0), 3);
     }
   }
-  LOGD("Creating vis costs %d ms", getTimeInterval(t));
+  //LOGD("Creating vis costs %d ms", getTimeInterval(t));
 
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, texOut);
   t = getTimeMs();
   glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE,
                   vis.data);
-  LOGD("glTexSubImage2D() costs %d ms", getTimeInterval(t));
+  //LOGD("glTexSubImage2D() costs %d ms", getTimeInterval(t));
 
   return targets;
 }
