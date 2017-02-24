@@ -37,9 +37,6 @@ std::vector<TargetInfo> processImpl(int w, int h, int texOut, DisplayMode mode,
   static cv::Mat input;
   input.create(h, w, CV_8UC4);
 
-  int numTargetsRoughFix;
-  numTargetsRoughFix = 0;
-
   // read
   t = getTimeMs();
   glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, input.data);
@@ -65,6 +62,7 @@ std::vector<TargetInfo> processImpl(int w, int h, int texOut, DisplayMode mode,
   std::vector<std::vector<cv::Point>> contours;
   std::vector<cv::Point> convex_contour;
   std::vector<TargetInfo> targets;
+  std::vector<TargetInfo> target_parts;
   std::vector<TargetInfo> rejected_targets;
   cv::findContours(contour_input, contours, cv::RETR_EXTERNAL, //Find all extreme (outer) contours, save in contours.
                    cv::CHAIN_APPROX_TC89_KCOS);
@@ -93,7 +91,7 @@ std::vector<TargetInfo> processImpl(int w, int h, int texOut, DisplayMode mode,
       }
       // Filter based on expected proportions
       const double kVertOverHorizontalMax = 6.0;
-      const double kVertOverHorizontalMin = 2.0;
+      const double kVertOverHorizontalMin = 0.5;//2.0 for a full target, .5 for a possibly split target
 
       double actualVertOverHorizontal = target.height/target.width;
       // LOGE("proportions = %.2lf", actualVertOverHorizontal);
@@ -116,18 +114,29 @@ std::vector<TargetInfo> processImpl(int w, int h, int texOut, DisplayMode mode,
         continue;
       }
 
-      numTargetsRoughFix ++;
-      if (numTargetsRoughFix > 3)
-      {
-        rejected_targets.push_back(std::move(target));
-        continue;
-      }
-      // We found a target
+      /*// We found a target
       LOGD("Found target at %.2lf, %.2lf...size %.2lf, %.2lf",
-           target.centroid_x, target.centroid_y, target.width, target.height);
-      targets.push_back(std::move(target));
+           target.centroid_x, target.centroid_y, target.width, target.height);//*/
+      target_parts.push_back(std::move(target));
   }
   //LOGD("Contour analysis costs %d ms", getTimeInterval(t));
+
+  // Look for pairs that are aligned vertically, and may represent two halves of a target, separated by the lift.
+  int target_parts_len;
+  target_parts_len = target_parts.size();
+  for(int i=0; i<target_parts_len; ++i)
+    for(int j=i+1; j<target_parts_len, ++j)
+    {
+        const auto &target1 = target_parts[i];
+        const auto &target2 = target_parts[j];
+        //TODO: If widths within 15%
+        //TODO: If horizonltally aligned within 15%
+        //TODO: If [max_height - min_height]/width in range [2.0,6.0]
+        //TODO: Then add new pair to target_parts (appending to end is ok, since target_parts.size is saved, not calculated)
+    }
+
+
+
 
   // write back
   t = getTimeMs();
