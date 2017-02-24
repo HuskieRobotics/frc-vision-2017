@@ -19,10 +19,12 @@ enum DisplayMode {
 };
 
 struct TargetInfo {
+  TargetInfo(): isGeneratedPair(false) { }
   double centroid_x;
   double centroid_y;
   double width;
   double height;
+  bool isGeneratedPair;
   cv::Rect box;
   std::vector<cv::Point> contour;
 };
@@ -132,11 +134,26 @@ std::vector<TargetInfo> processImpl(int w, int h, int texOut, DisplayMode mode,
         //TODO: If widths within 15%
         //TODO: If horizonltally aligned within 15%
         //TODO: If [max_height - min_height]/width in range [2.0,6.0]
-        //TODO: Then add new pair to target_parts (appending to end is ok, since target_parts.size is saved, not calculated)
+        //TODO: THEN
+        //TODO: Generate combined target part [newTargetPair = ... ; newTargetPair.isGeneratedPair = True;]
+        //TODO: Add new target part to target_parts (appending to end is ok, since target_parts.size is saved, not calculated)
     }
 
-
-
+  target_parts_len = target_parts.size(); //Recalculate, since we have possibly added some partial pairs
+  for(int i=0; i<target_parts_len; ++i)
+    for(int j=i+1; j<target_parts_len, ++j)
+    {
+        const auto &target1 = target_parts[i];
+        const auto &target2 = target_parts[j];
+        //TODO: If boxes do not overlap
+        //TODO: If bottom of boxes align within 25%
+        //TODO: If top of boxes align within 25%
+        //TODO: max_height = max(target1.top, target2.top) - min(target1.bottom, target2.bottom);
+        //TODO: If (deltaX in range(.25*max_height, 1.5*max_height)
+        //TODO: THEN
+        //TODO: Generate combined target
+        //TODO: targets.push_back(std::move(combined target))
+    }
 
   // write back
   t = getTimeMs();
