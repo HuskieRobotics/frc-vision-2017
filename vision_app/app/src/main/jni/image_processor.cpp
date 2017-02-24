@@ -25,18 +25,20 @@ struct TargetInfo {
   double height;
   cv::Rect box;
   std::vector<cv::Point> contour;
-  cv::RotatedRect rotatedRect;
 };
 
 std::vector<TargetInfo> processImpl(int w, int h, int texOut, DisplayMode mode,
                                     int h_min, int h_max, int s_min, int s_max,
                                     int v_min, int v_max) {
-  LOGD("Image is %d x %d", w, h);
-  LOGD("H %d-%d S %d-%d V %d-%d", h_min, h_max, s_min, s_max, v_min, v_max);
+  //LOGD("Image is %d x %d", w, h);
+  //LOGD("H %d-%d S %d-%d V %d-%d", h_min, h_max, s_min, s_max, v_min, v_max);
   int64_t t;
 
   static cv::Mat input;
   input.create(h, w, CV_8UC4);
+
+  int numTargetsRoughFix;
+  numTargetsRoughFix = 0;
 
   // read
   t = getTimeMs();
@@ -62,7 +64,6 @@ std::vector<TargetInfo> processImpl(int w, int h, int texOut, DisplayMode mode,
   contour_input = thresh.clone();
   std::vector<std::vector<cv::Point>> contours;
   std::vector<cv::Point> convex_contour;
-  std::vector<cv::Point> poly;
   std::vector<TargetInfo> targets;
   std::vector<TargetInfo> rejected_targets;
   cv::findContours(contour_input, contours, cv::RETR_EXTERNAL, //Find all extreme (outer) contours, save in contours.
@@ -70,16 +71,9 @@ std::vector<TargetInfo> processImpl(int w, int h, int texOut, DisplayMode mode,
   for (auto &contour : contours) {
       TargetInfo target;
       target.box = cv::boundingRect(contour);
-      //target.rotatedRect = cv::minAreaRect(contour);
-      target.centroid_x = 0;
-      target.centroid_y = 0;
 
-      //TODO: Measuring center of rectangle, need to measure center of mass
-      //target.centroid_x += (target.box.tl().x + target.box.br().x)/2.0;
-      //target.centroid_y += (target.box.tl().y + target.box.br().y)/2.0;
-
-      target.centroid_x  = (target.box.tl().x + target.box.br().x)/2.0;//target.rotatedRect.center.x;
-      target.centroid_y  = (target.box.tl().y + target.box.br().y)/2.0;//target.rotatedRect.center.y;
+      target.centroid_x  = (target.box.tl().x + target.box.br().x)/2.0;
+      target.centroid_y  = (target.box.tl().y + target.box.br().y)/2.0;
 
       target.width = target.box.width;
       target.height = target.box.height;
@@ -88,41 +82,46 @@ std::vector<TargetInfo> processImpl(int w, int h, int texOut, DisplayMode mode,
       // Keep in mind width/height are in imager terms...
       const double kMinTargetWidth = 10;
       const double kMaxTargetWidth = 250;
-      const double kMinTargetHeight = 10;
+      const double kMinTargetHeight = 20;
       const double kMaxTargetHeight = 250;
       if (target.width < kMinTargetWidth || target.width > kMaxTargetWidth ||
         target.height < kMinTargetHeight ||
         target.height > kMaxTargetHeight) {
-        LOGD("Rejecting target due to size");
+        //LOGD("Rejecting target due to size");
         rejected_targets.push_back(std::move(target));
         continue;
       }
       // Filter based on expected proportions
-      const double kVertOverHorizontalMax = 1 / 1; //TODO: Find better values
-      const double kVertOverHorizontalMin = 1 / 50;
+      const double kVertOverHorizontalMax = 6.0;
+      const double kVertOverHorizontalMin = 2.0;
 
       double actualVertOverHorizontal = target.height/target.width;
+      // LOGE("proportions = %.2lf", actualVertOverHorizontal);
 
-      if (actualVertOverHorizontal <= kVertOverHorizontalMin && actualVertOverHorizontal >= kVertOverHorizontalMax) {
-        LOGD("Rejecting target due to shape");
-        LOGD("proportions = %.2lf", actualVertOverHorizontal);
+      if (actualVertOverHorizontal <= kVertOverHorizontalMin || actualVertOverHorizontal >= kVertOverHorizontalMax) {
+        LOGD("Rejecting target due to shape: proportions = %.2lf", actualVertOverHorizontal);
         rejected_targets.push_back(std::move(target));
         continue;
       }//*/
 
-      /*
+
       // Filter based on fullness
-      const double kMinFullness = .2;
-      const double kMaxFullness = .5;
+      const double kMinFullness = .65;
+      const double kMaxFullness = 1;
       double original_contour_area = cv::contourArea(contour);
-      double poly_area = cv::contourArea(poly);
-      double fullness = original_contour_area / poly_area;
+      double fullness = original_contour_area / target.box.area();
       if (fullness < kMinFullness || fullness > kMaxFullness) {
-        LOGD("Rejected target due to fullness");
+        LOGD("Rejected target due to fullness: %.2lf", fullness);
         rejected_targets.push_back(std::move(target));
         continue;
-      }//*/
+      }
 
+      numTargetsRoughFix ++;
+      if (numTargetsRoughFix > 3)
+      {
+        rejected_targets.push_back(std::move(target));
+        continue;
+      }
       // We found a target
       LOGD("Found target at %.2lf, %.2lf...size %.2lf, %.2lf",
            target.centroid_x, target.centroid_y, target.width, target.height);
@@ -143,17 +142,12 @@ std::vector<TargetInfo> processImpl(int w, int h, int texOut, DisplayMode mode,
 
     // Render the targets
     for (auto &target : targets) {
-        //cv::polylines(vis, target.points, true, cv::Scalar(0, 112, 255), 3);//Blueish
         cv::circle(vis, cv::Point(target.centroid_x, target.centroid_y), 5,
                    cv::Scalar(0, 112, 255), 3);
-        //cv::rotatedRectangle(vis, target.rotatedRect, cv::Scalar(112, 112, 30));
-        cv::rectangle(vis, target.box, cv::Scalar(60, 112, 112));
+        cv::rectangle(vis, target.box, cv::Scalar(20, 255, 20), 2);
     }
-    /*for (auto &target : rejected_targets) {
-        convex_contour.clear();
-        cv::convexHull(target.contour, convex_contour, false); //Find the convex hull of the contour.
-        cv::drawContours(vis, std::vector<std::vector<cv::Point> >(1,convex_contour), -1, cv::Scalar(255, 0, 0), 2);
-        //cv::polylines(vis, target.points, true, cv::Scalar(255, 0, 0), 2);//Red
+    for (auto &target : rejected_targets) {
+        cv::rectangle(vis, target.box, cv::Scalar(255, 10, 0), 2);
     }//*/
 
   } else {
@@ -163,11 +157,12 @@ std::vector<TargetInfo> processImpl(int w, int h, int texOut, DisplayMode mode,
       //cv::polylines(vis, target.points, true, cv::Scalar(0, 112, 255), 3);
       cv::circle(vis, cv::Point(target.centroid_x, target.centroid_y), 5,
                  cv::Scalar(0, 112, 255), 3);
+      cv::rectangle(vis, target.box, cv::Scalar(20, 255, 20), 2);
     }
   }
   if (mode == DISP_MODE_TARGETS_PLUS) {
     for (auto &target : rejected_targets) {
-      //cv::polylines(vis, target.points, true, cv::Scalar(255, 0, 0), 3);
+      cv::rectangle(vis, target.box, cv::Scalar(255, 10, 0), 2);
     }
   }
   //LOGD("Creating vis costs %d ms", getTimeInterval(t));
