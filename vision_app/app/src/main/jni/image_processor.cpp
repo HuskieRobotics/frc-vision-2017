@@ -82,7 +82,7 @@ std::vector<TargetInfo> processImpl(int w, int h, int texOut, DisplayMode mode,
       // Keep in mind width/height are in imager terms...
       const double kMinTargetWidth = 10;
       const double kMaxTargetWidth = 250;
-      const double kMinTargetHeight = 20;
+      const double kMinTargetHeight = 10;
       const double kMaxTargetHeight = 250;
       if (target.width < kMinTargetWidth || target.width > kMaxTargetWidth ||
         target.height < kMinTargetHeight ||
@@ -93,7 +93,7 @@ std::vector<TargetInfo> processImpl(int w, int h, int texOut, DisplayMode mode,
       }
       // Filter based on expected proportions
       const double kVertOverHorizontalMax = 6.0;
-      const double kVertOverHorizontalMin = 0.5;//2.0 for a full target, .5 for a possibly split target
+      const double kVertOverHorizontalMin = 0.4;//2.0 for a full target, .5 for a possibly split target
 
       double actualVertOverHorizontal = target.height/target.width;
       // LOGE("proportions = %.2lf", actualVertOverHorizontal);
@@ -123,25 +123,50 @@ std::vector<TargetInfo> processImpl(int w, int h, int texOut, DisplayMode mode,
   }
   //LOGD("Contour analysis costs %d ms", getTimeInterval(t));
 
+
   // Look for pairs that are aligned vertically, and may represent two halves of a target, separated by the lift.
-  int target_parts_len;
+  const double kWidthMaxError = 0.075;
+  const double kHorizontalLocationMaxError = 0.04;
+
+  static int target_parts_len;
+  static double min_altitude, max_altitude;
+  static double max_width, max_height;
+  static double proportions;
+
   target_parts_len = target_parts.size();
   for(int i=0; i<target_parts_len; ++i)
-    for(int j=i+1; j<target_parts_len, ++j)
+    for(int j=i+1; j<target_parts_len; ++j)
     {
         const auto &target1 = target_parts[i];
         const auto &target2 = target_parts[j];
-        //TODO: If widths within 15%
-        //TODO: If horizonltally aligned within 15%
-        //TODO: If [max_height - min_height]/width in range [2.0,6.0]
-        //TODO: THEN
-        //TODO: Generate combined target part [newTargetPair = ... ; newTargetPair.isGeneratedPair = True;]
-        //TODO: Add new target part to target_parts (appending to end is ok, since target_parts.size is saved, not calculated)
+
+        max_width = std::max(target1.width, target2.width);
+        if ((std::abs(target1.width-target2.width)/max_width) < 0.15)//If widths within 15%
+        {
+          if ((std::abs(target1.centroid_x-target2.centroid_x)/std::max(target1.centroid_x, target2.centroid_x)) < 0.15)//If horizontally aligned within 15%
+          {
+            min_altitude = std::min(target1.box.tl().y, target2.box.tl().y);
+            max_altitude = std::max(target1.box.br().y, target2.box.br().y);
+            max_height = max_altitude-min_altitude;
+            proportions = max_height/max_width;
+            if ((proportions<6.0)&&(proportions>2.0))//If [max_height - min_height]/width in range [2.0,6.0]
+            {
+              TargetInfo newTargetPair;
+              newTargetPair.isGeneratedPair = true;
+              newTargetPair.box = cv::Rect(std::min(target1.box.tl().x,target2.box.tl().x),min_altitude,max_width,max_height);
+              newTargetPair.box.width = max_width;
+              newTargetPair.box.height= max_height;
+              newTargetPair.centroid_x = (newTargetPair.box.tl().x + newTargetPair.box.br().x)/2.0;
+              newTargetPair.centroid_y = (newTargetPair.box.tl().y + newTargetPair.box.br().y)/2.0;
+              target_parts.push_back(std::move(newTargetPair));//Add new target part to target_parts (appending to end is ok, since target_parts.size is saved, not calculated)
+            }
+          }
+        }
     }
 
   target_parts_len = target_parts.size(); //Recalculate, since we have possibly added some partial pairs
   for(int i=0; i<target_parts_len; ++i)
-    for(int j=i+1; j<target_parts_len, ++j)
+    for(int j=i+1; j<target_parts_len; ++j)
     {
         const auto &target1 = target_parts[i];
         const auto &target2 = target_parts[j];
@@ -167,7 +192,7 @@ std::vector<TargetInfo> processImpl(int w, int h, int texOut, DisplayMode mode,
 
 
     // Render the targets
-    for (auto &target : targets) {
+    for (auto &target : target_parts) {
         cv::circle(vis, cv::Point(target.centroid_x, target.centroid_y), 5,
                    cv::Scalar(0, 112, 255), 3);
         cv::rectangle(vis, target.box, cv::Scalar(20, 255, 20), 2);
@@ -182,11 +207,18 @@ std::vector<TargetInfo> processImpl(int w, int h, int texOut, DisplayMode mode,
     for (auto &target : targets) {
       //cv::polylines(vis, target.points, true, cv::Scalar(0, 112, 255), 3);
       cv::circle(vis, cv::Point(target.centroid_x, target.centroid_y), 5,
-                 cv::Scalar(0, 112, 255), 3);
-      cv::rectangle(vis, target.box, cv::Scalar(20, 255, 20), 2);
+                 cv::Scalar(0, 255, 255), 3);
+      cv::rectangle(vis, target.box, cv::Scalar(20, 255, 200), 2);
+
     }
   }
   if (mode == DISP_MODE_TARGETS_PLUS) {
+    for (auto &target : target_parts) {
+      //cv::polylines(vis, target.points, true, cv::Scalar(0, 112, 255), 3);
+      cv::circle(vis, cv::Point(target.centroid_x, target.centroid_y), 5,
+                 cv::Scalar(0, 112, 255), 3);
+      cv::rectangle(vis, target.box, cv::Scalar(20, 255, 20), 2);
+    }
     for (auto &target : rejected_targets) {
       cv::rectangle(vis, target.box, cv::Scalar(255, 10, 0), 2);
     }
