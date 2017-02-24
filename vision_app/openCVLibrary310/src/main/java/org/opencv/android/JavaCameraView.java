@@ -157,6 +157,16 @@ public class JavaCameraView extends CameraBridgeViewBase implements PreviewCallb
                         params.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO);
                     }
 
+
+
+                    Log.d("JavaCameraView", params.flatten());//Attempt to printout the camera parameters
+
+                    params.set("mode", "m");
+
+                    params.set("aperture", "28"); //can be 28 32 35 40 45 50 56 63 71 80 on default zoom
+                    params.set("iso", "400");
+                    //Camera.setParameters(params);//Doesn't compile
+
                     mCamera.setParameters(params);
                     params = mCamera.getParameters();
 
@@ -266,7 +276,7 @@ public class JavaCameraView extends CameraBridgeViewBase implements PreviewCallb
             synchronized (this) {
                 this.notify();
             }
-            Log.d(TAG, "Wating for thread");
+            Log.d(TAG, "Waiting for thread");
             if (mThread != null)
                 mThread.join();
         } catch (InterruptedException e) {
