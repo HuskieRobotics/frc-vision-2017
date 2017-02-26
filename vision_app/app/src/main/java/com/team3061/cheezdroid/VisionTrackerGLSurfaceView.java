@@ -26,7 +26,7 @@ import java.util.HashMap;
 public class VisionTrackerGLSurfaceView extends BetterCameraGLSurfaceView implements BetterCameraGLSurfaceView.CameraTextureListener {
 
     static final String LOGTAG = "VTGLSurfaceView";
-    protected int procMode = NativePart.DISP_MODE_TARGETS_PLUS;
+    protected int procMode = NativePart.DISP_MODE_THRESH;//NativePart.DISP_MODE_TARGETS_PLUS;
     public static final String[] PROC_MODE_NAMES = new String[]{"Raw image", "Threshholded image", "Targets", "Targets plus"};
     protected int frameCounter;
     protected long lastNanoTime;
