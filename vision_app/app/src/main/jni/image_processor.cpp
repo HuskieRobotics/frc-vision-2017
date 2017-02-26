@@ -116,9 +116,6 @@ std::vector<TargetInfo> processImpl(int w, int h, int texOut, DisplayMode mode,
         continue;
       }
 
-      /*// We found a target
-      LOGD("Found target at %.2lf, %.2lf...size %.2lf, %.2lf",
-           target.centroid_x, target.centroid_y, target.width, target.height);//*/
       target_parts.push_back(std::move(target));
   }
   //LOGD("Contour analysis costs %d ms", getTimeInterval(t));
@@ -133,17 +130,23 @@ std::vector<TargetInfo> processImpl(int w, int h, int texOut, DisplayMode mode,
   static double max_width, max_height;
   static double proportions;
 
+  /*static int hard_cutoff = 0;//TODO: Remove this
+  if (hard_cutoff >= 2)//TODO: Remove this
+      continue;
+  hard_cutoff++;//TODO: Remove this*/
+
   target_parts_len = target_parts.size();
   for(int i=0; i<target_parts_len; ++i)
     for(int j=i+1; j<target_parts_len; ++j)
     {
+
         const auto &target1 = target_parts[i];
         const auto &target2 = target_parts[j];
 
         max_width = std::max(target1.width, target2.width);
-        if ((std::abs(target1.width-target2.width)/max_width) < 0.15)//If widths within 15%
+        if ((std::abs(target1.width-target2.width)/max_width) < kWidthMaxError)//If widths within 15%
         {
-          if ((std::abs(target1.centroid_x-target2.centroid_x)/std::max(target1.centroid_x, target2.centroid_x)) < 0.15)//If horizontally aligned within 15%
+          if ((std::abs(target1.centroid_x-target2.centroid_x)/std::max(target1.centroid_x, target2.centroid_x)) < kHorizontalLocationMaxError)//If horizontally aligned within 15%
           {
             min_altitude = std::min(target1.box.tl().y, target2.box.tl().y);
             max_altitude = std::max(target1.box.br().y, target2.box.br().y);
@@ -165,19 +168,40 @@ std::vector<TargetInfo> processImpl(int w, int h, int texOut, DisplayMode mode,
     }
 
   target_parts_len = target_parts.size(); //Recalculate, since we have possibly added some partial pairs
+  static double altitude_err_top, altitude_err_bottom;
+  static double width;
+  const double kAltMaxError = 0.125;
   for(int i=0; i<target_parts_len; ++i)
     for(int j=i+1; j<target_parts_len; ++j)
     {
-        const auto &target1 = target_parts[i];
-        const auto &target2 = target_parts[j];
-        //TODO: If boxes do not overlap
-        //TODO: If bottom of boxes align within 25%
-        //TODO: If top of boxes align within 25%
-        //TODO: max_height = max(target1.top, target2.top) - min(target1.bottom, target2.bottom);
-        //TODO: If (deltaX in range(.25*max_height, 1.5*max_height)
-        //TODO: THEN
-        //TODO: Generate combined target
-        //TODO: targets.push_back(std::move(combined target))
+      const auto &target1 = target_parts[i];
+      const auto &target2 = target_parts[j];
+      if ((target1.box & target2.box).area() == 0)//If boxes do not overlap (Look for area of the intersection of the rects)
+      {
+        altitude_err_top = std::abs(target1.box.tl().y - target2.box.tl().y) / std::max(target1.box.tl().y, target2.box.tl().y);
+        altitude_err_bottom = std::abs(target1.box.br().y - target2.box.br().y) / std::max(target1.box.br().y, target2.box.br().y);
+        LOGE("Altitude Err: %.2lf, %.2lf", altitude_err_top, altitude_err_bottom);//TODO: This is always returning 0!!!
+        if (altitude_err_top < kAltMaxError && altitude_err_bottom < kAltMaxError)// If bottom and top of boxes align within 12.5%
+        {
+          LOGE("Altitudes align");
+          max_height = std::max(target1.box.br().y, target2.box.br().y) - std::min(target1.box.tl().y, target2.box.tl().y);//max_height = max(target1.top, target2.top) - min(target1.bottom, target2.bottom);
+          width = std::abs(target1.centroid_x - target2.centroid_x);
+          LOGE("max_height: %.2lf, width: %.2lf", max_height, width);
+          if ((0.25*max_height)<width && width < (1.5*max_height) ) //if (width in range(.25*max_height, 1.5*max_height)
+          {
+            TargetInfo full_target;//Generate combined target
+            full_target.box = target1.box | target2.box; //Rectangle that encloses both smaller rects
+            full_target.height = full_target.box.height;
+            full_target.width = full_target.box.width;
+            full_target.centroid_x = full_target.box.x + (full_target.box.width/2);
+            full_target.centroid_y = full_target.box.y + (full_target.box.height/2);
+
+            targets.push_back(std::move(full_target));// We found a target
+            LOGD("Found target at %.2lf, %.2lf...size %.2lf, %.2lf",
+            full_target.centroid_x, full_target.centroid_y, full_target.width, full_target.height);//*/
+          }
+        }
+      }
     }
 
   // write back
@@ -188,39 +212,35 @@ std::vector<TargetInfo> processImpl(int w, int h, int texOut, DisplayMode mode,
   } else if (mode == DISP_MODE_THRESH) {
     cv::cvtColor(thresh, vis, CV_GRAY2RGBA);
 
-    //cv::drawContours(vis, contours, -1,cv::Scalar(255, 127, 0), 2);
-
-
     // Render the targets
     for (auto &target : target_parts) {
-        cv::circle(vis, cv::Point(target.centroid_x, target.centroid_y), 5,
-                   cv::Scalar(0, 112, 255), 3);
-        cv::rectangle(vis, target.box, cv::Scalar(20, 255, 20), 2);
+        cv::rectangle(vis, target.box, cv::Scalar(20, 190, 20), 1);
     }
     for (auto &target : rejected_targets) {
-        cv::rectangle(vis, target.box, cv::Scalar(255, 10, 0), 2);
-    }//*/
+        cv::rectangle(vis, target.box, cv::Scalar(255, 10, 0), 1);
+    }
+    for (auto &target : targets) {
+        cv::circle(vis, cv::Point(target.centroid_x, target.centroid_y), 5,
+                   cv::Scalar(0, 190, 255), 3);
+        cv::rectangle(vis, target.box, cv::Scalar(10, 255, 10), 2);
+    }
 
   } else {
     vis = input;
     // Render the targets
     for (auto &target : targets) {
-      //cv::polylines(vis, target.points, true, cv::Scalar(0, 112, 255), 3);
-      cv::circle(vis, cv::Point(target.centroid_x, target.centroid_y), 5,
-                 cv::Scalar(0, 255, 255), 3);
-      cv::rectangle(vis, target.box, cv::Scalar(20, 255, 200), 2);
+        cv::circle(vis, cv::Point(target.centroid_x, target.centroid_y), 5,
+                   cv::Scalar(0, 190, 255), 3);
+        cv::rectangle(vis, target.box, cv::Scalar(10, 255, 10), 2);
 
     }
   }
   if (mode == DISP_MODE_TARGETS_PLUS) {
     for (auto &target : target_parts) {
-      //cv::polylines(vis, target.points, true, cv::Scalar(0, 112, 255), 3);
-      cv::circle(vis, cv::Point(target.centroid_x, target.centroid_y), 5,
-                 cv::Scalar(0, 112, 255), 3);
-      cv::rectangle(vis, target.box, cv::Scalar(20, 255, 20), 2);
+        cv::rectangle(vis, target.box, cv::Scalar(20, 190, 20), 1);
     }
     for (auto &target : rejected_targets) {
-      cv::rectangle(vis, target.box, cv::Scalar(255, 10, 0), 2);
+        cv::rectangle(vis, target.box, cv::Scalar(255, 10, 0), 1);
     }
   }
   //LOGD("Creating vis costs %d ms", getTimeInterval(t));
@@ -272,6 +292,7 @@ extern "C" void processFrame(JNIEnv *env, int tex1, int tex2, int w, int h,
   auto targets = processImpl(w, h, tex2, static_cast<DisplayMode>(mode), h_min,
                              h_max, s_min, s_max, v_min, v_max);
   int numTargets = targets.size();
+  numTargets = std::min(numTargets, 3); //Limit to 3 targets
   ensureJniRegistered(env);
   env->SetIntField(destTargetInfo, sNumTargetsField, numTargets);
   if (numTargets == 0) {
@@ -279,7 +300,7 @@ extern "C" void processFrame(JNIEnv *env, int tex1, int tex2, int w, int h,
   }
   jobjectArray targetsArray = static_cast<jobjectArray>(
       env->GetObjectField(destTargetInfo, sTargetsField));
-  for (int i = 0; i < std::min(numTargets, 3); ++i) {
+  for (int i = 0; i < numTargets; ++i) {
     jobject targetObject = env->GetObjectArrayElement(targetsArray, i);
     const auto &target = targets[i];
     env->SetDoubleField(targetObject, sCentroidXField, target.centroid_x);
