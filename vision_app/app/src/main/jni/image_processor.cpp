@@ -105,8 +105,8 @@ std::vector<TargetInfo> processImpl(int w, int h, int texOut, DisplayMode mode,
       }//*/
 
 
-      // Filter based on fullness
-      const double kMinFullness = .75;
+       //TODO: Fix this. Currently rejecting some good targets, allowing some bad // Filter based on fullness
+      const double kMinFullness = .5;
       const double kMaxFullness = 1;
       double original_contour_area = cv::contourArea(contour);//TODO: If the contour is a hollow rectangle, the area returned is the total area! This needs to be fixed.
       double fullness = original_contour_area / target.box.area();
@@ -114,7 +114,7 @@ std::vector<TargetInfo> processImpl(int w, int h, int texOut, DisplayMode mode,
         LOGD("Rejected target due to fullness: %.2lf", fullness);
         rejected_targets.push_back(std::move(target));
         continue;
-      }
+      }//*/
 
       target_parts.push_back(std::move(target));
   }
@@ -165,7 +165,7 @@ std::vector<TargetInfo> processImpl(int w, int h, int texOut, DisplayMode mode,
   target_parts_len = target_parts.size(); //Recalculate, since we have possibly added some partial pairs
   static double altitude_err_top, altitude_err_bottom;
   static double width;
-  const double kAltMaxError = 0.125;
+  const double kAltMaxError = 0.25;
   for(int i=0; i<target_parts_len; ++i)
     for(int j=i+1; j<target_parts_len; ++j)
     {
@@ -173,15 +173,15 @@ std::vector<TargetInfo> processImpl(int w, int h, int texOut, DisplayMode mode,
       const auto &target2 = target_parts[j];
       if ((target1.box & target2.box).area() == 0)//If boxes do not overlap (Look for area of the intersection of the rects)
       {
-        altitude_err_top = double(std::abs(target1.box.tl().y - target2.box.tl().y)) / double(std::max(target1.box.tl().y, target2.box.tl().y));
-        altitude_err_bottom = double(std::abs(target1.box.br().y - target2.box.br().y)) / double(std::max(target1.box.br().y, target2.box.br().y));
+        altitude_err_top = double(std::abs(target1.box.tl().y - target2.box.tl().y)) / double(std::max(target1.height, target2.height));
+        altitude_err_bottom = double(std::abs(target1.box.br().y - target2.box.br().y)) / double(std::max(target1.height, target2.height));
         LOGE("Altitude Err: %.2lf, %.2lf", altitude_err_top, altitude_err_bottom);
         if (altitude_err_top < kAltMaxError && altitude_err_bottom < kAltMaxError)// If bottom and top of boxes align within 12.5%
         {
           max_height = std::max(target1.box.br().y, target2.box.br().y) - std::min(target1.box.tl().y, target2.box.tl().y);//max_height = max(target1.top, target2.top) - min(target1.bottom, target2.bottom);
           width = std::abs(target1.centroid_x - target2.centroid_x);
           LOGE("max_height: %.2lf, width: %.2lf", max_height, width);
-          if ((0.5*max_height)<width && width < (1.75*max_height) ) //if (width in range(.5*max_height, 1.75*max_height)
+          if ((0.5*max_height)<width && width < (2.25*max_height) ) //if (width in range(.5*max_height, 1.75*max_height)
           {
             TargetInfo full_target;//Generate combined target
             full_target.box = target1.box | target2.box; //Rectangle that encloses both smaller rects
