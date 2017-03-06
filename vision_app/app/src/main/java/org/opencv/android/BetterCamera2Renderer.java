@@ -136,6 +136,14 @@ public class BetterCamera2Renderer extends BetterCameraGLRendererBase {
                 if (focal_lengths.length != 1) {
                     Log.e(LOGTAG, "Error: more than one focal length supported");
                 }
+                Log.d(LOGTAG, "SENSOR_INFO_WHITE_LEVEL: " + characteristics.get(CameraCharacteristics.SENSOR_INFO_WHITE_LEVEL));
+                Log.d(LOGTAG, "SENSOR_INFO_EXPOSURE_TIME_RANGE: " + characteristics.get(CameraCharacteristics.SENSOR_INFO_EXPOSURE_TIME_RANGE));
+                Log.d(LOGTAG, "CONTROL_AF_AVAILABLE_MODES: " + characteristics.get(CameraCharacteristics.CONTROL_AF_AVAILABLE_MODES));
+                Log.d(LOGTAG, "CONTROL_AE_COMPENSATION_RANGE: " + characteristics.get(CameraCharacteristics.CONTROL_AE_COMPENSATION_RANGE));
+                Log.d(LOGTAG, "CONTROL_AE_COMPENSATION_STEP: " + characteristics.get(CameraCharacteristics.CONTROL_AE_COMPENSATION_STEP));
+                Log.d(LOGTAG, "CONTROL_AWB_LOCK_AVAILABLE: " + characteristics.get(CameraCharacteristics.CONTROL_AWB_LOCK_AVAILABLE));
+                Log.d(LOGTAG, "CONTROL_AWB_LOCK_MODES: " + characteristics.get(CameraCharacteristics.CONTROL_AWB_AVAILABLE_MODES));
+                Log.d(LOGTAG, "SENSOR_INFO_EXPOSURE_TIME_RANGE: " + characteristics.get(CameraCharacteristics.SENSOR_INFO_EXPOSURE_TIME_RANGE));
                 SizeF sensor_size = characteristics.get(CameraCharacteristics.SENSOR_INFO_PHYSICAL_SIZE);
                 Log.d(LOGTAG, "Sensor size: " + sensor_size);
                 double width_dim = sensor_size.getWidth();
