@@ -21,7 +21,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 public class RobotConnection {
-    public static final int K_ROBOT_PORT = 8254;
+    public static final int K_ROBOT_PORT = 3061;
     public static final String K_ROBOT_PROXY_HOST = "localhost";
     public static final int K_CONNECTOR_SLEEP_MS = 100;
     public static final int K_THRESHOLD_HEARTBEAT = 800;
@@ -230,7 +230,7 @@ public class RobotConnection {
     }
 
     private synchronized boolean sendToWire(VisionMessage message) {
-        String toSend = message.toJson() + "\n";
+        String toSend = message.toJson() + "\r\n";
         if (m_socket != null && m_socket.isConnected()) {
             try {
                 OutputStream os = m_socket.getOutputStream();
