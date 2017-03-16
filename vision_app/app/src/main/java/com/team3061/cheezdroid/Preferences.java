@@ -77,11 +77,11 @@ public class Preferences {
 
     public void restoreDefaults() {
         Resources res = m_context.getResources();
-        setThresholdHRange(79, 87);
+        setThresholdHRange(res.getInteger(R.integer.default_h_min), res.getInteger(R.integer.default_h_max));
         m_h_ranges = null;
-        setThresholdSRange(123, res.getInteger(R.integer.default_s_max));
+        setThresholdSRange(res.getInteger(R.integer.default_s_min), res.getInteger(R.integer.default_s_max));
         m_s_ranges = null;
-        setThresholdVRange(50, res.getInteger(R.integer.default_v_max));
+        setThresholdVRange(res.getInteger(R.integer.default_v_min), res.getInteger(R.integer.default_v_max));
         m_v_ranges = null;
 
     }
