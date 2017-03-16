@@ -57,6 +57,7 @@ std::vector<TargetInfo> processImpl(int w, int h, int texOut, DisplayMode mode,
   cv::inRange(hsv, cv::Scalar(h_min, s_min, v_min),
               cv::Scalar(h_max, s_max, v_max), thresh);
   //LOGD("inRange() costs %d ms", getTimeInterval(t));
+  int threshChannels = thresh.channels();
 
   t = getTimeMs();
   static cv::Mat contour_input;
@@ -105,11 +106,30 @@ std::vector<TargetInfo> processImpl(int w, int h, int texOut, DisplayMode mode,
       }//*/
 
 
-       //TODO: Fix this. Currently rejecting some good targets, allowing some bad // Filter based on fullness
-      const double kMinFullness = .5;
+      const double kMinFullness = .70;
       const double kMaxFullness = 1;
-      double original_contour_area = cv::contourArea(contour);//TODO: If the contour is a hollow rectangle, the area returned is the total area! This needs to be fixed.
-      double fullness = original_contour_area / target.box.area();
+      double original_contour_area = cv::contourArea(contour);
+      // accept only char type matrices
+      CV_Assert(thresh.depth() == CV_8U);
+      int i,j;
+      int xStart, xStop, yStop;
+      int whiteCnt = 0;
+      xStart = target.box.tl().x;
+      xStop = target.box.br().x;
+      yStop = target.box.br().y;
+      uchar* p;
+      for( i = target.box.tl().y; i < yStop; ++i)
+      {
+          p = thresh.ptr<uchar>(i);
+          for ( j = xStart; j < xStop; j+=threshChannels)
+          {
+              whiteCnt += (p[j]==255) ? 1 : 0;
+          }
+      }
+      double fullness = whiteCnt*1.0/target.box.area();//original_contour_area / target.box.area();
+      LOGE("whiteCnt, area, %%: %2d, %2d, %.2lf", whiteCnt, target.box.area(), fullness);
+
+      //double fullness = whiteCnt*1.0/target.box.area();//original_contour_area / target.box.area();
       if (fullness < kMinFullness || fullness > kMaxFullness) {
         LOGD("Rejected target due to fullness: %.2lf", fullness);
         rejected_targets.push_back(std::move(target));
