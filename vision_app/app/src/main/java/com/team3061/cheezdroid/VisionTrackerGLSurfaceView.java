@@ -46,7 +46,7 @@ public class VisionTrackerGLSurfaceView extends BetterCameraGLSurfaceView implem
         settings.camera_settings = new HashMap<>();
         settings.camera_settings.put(CaptureRequest.CONTROL_MODE, CaptureRequest.CONTROL_MODE_OFF);
         settings.camera_settings.put(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_OFF);
-        settings.camera_settings.put(CaptureRequest.FLASH_MODE, CaptureRequest.FLASH_MODE_TORCH);
+        //settings.camera_settings.put(CaptureRequest.FLASH_MODE, CaptureRequest.FLASH_MODE_TORCH);
         settings.camera_settings.put(CaptureRequest.CONTROL_AWB_MODE, CaptureRequest.CONTROL_AWB_MODE_INCANDESCENT);
         settings.camera_settings.put(CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE, CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_OFF);
         settings.camera_settings.put(CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE, CaptureRequest.LENS_OPTICAL_STABILIZATION_MODE_OFF);

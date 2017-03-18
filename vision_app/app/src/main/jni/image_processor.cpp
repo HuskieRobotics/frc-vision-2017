@@ -97,13 +97,12 @@ std::vector<TargetInfo> processImpl(int w, int h, int texOut, DisplayMode mode,
       const double kVertOverHorizontalMin = 0.4;//2.0 for a full target, .5 for a possibly split target
 
       double actualVertOverHorizontal = target.height/target.width;
-      // LOGE("proportions = %.2lf", actualVertOverHorizontal);
 
       if (actualVertOverHorizontal <= kVertOverHorizontalMin || actualVertOverHorizontal >= kVertOverHorizontalMax) {
         LOGD("Rejecting target due to shape: proportions = %.2lf", actualVertOverHorizontal);
         rejected_targets.push_back(std::move(target));
         continue;
-      }//*/
+      }
 
 
       const double kMinFullness = .70;
@@ -127,14 +126,11 @@ std::vector<TargetInfo> processImpl(int w, int h, int texOut, DisplayMode mode,
           }
       }
       double fullness = whiteCnt*1.0/target.box.area();//original_contour_area / target.box.area();
-      LOGE("whiteCnt, area, %%: %2d, %2d, %.2lf", whiteCnt, target.box.area(), fullness);
-
-      //double fullness = whiteCnt*1.0/target.box.area();//original_contour_area / target.box.area();
       if (fullness < kMinFullness || fullness > kMaxFullness) {
         LOGD("Rejected target due to fullness: %.2lf", fullness);
         rejected_targets.push_back(std::move(target));
         continue;
-      }//*/
+      }
 
       target_parts.push_back(std::move(target));
   }
@@ -217,6 +213,17 @@ std::vector<TargetInfo> processImpl(int w, int h, int texOut, DisplayMode mode,
         }
       }
     }
+
+    //TODO: Remove this section
+    TargetInfo full_target2;//Generate combined target
+    full_target2.box = cv::Rect(10,10,40,40); //Rectangle that encloses both smaller rects
+    full_target2.height = full_target2.box.height;
+    full_target2.width = full_target2.box.width;
+    full_target2.centroid_x = full_target2.box.x + (full_target2.box.width/2);
+    full_target2.centroid_y = full_target2.box.y + (full_target2.box.height/2);
+
+    targets.push_back(std::move(full_target2));// We found a target
+
 
   // write back
   t = getTimeMs();
