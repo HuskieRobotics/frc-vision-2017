@@ -34,6 +34,7 @@ public class NativePart {
             public double centroidY;
             public double width;
             public double height;
+            public double leftToRightRatio;
         }
 
         public int numTargets;

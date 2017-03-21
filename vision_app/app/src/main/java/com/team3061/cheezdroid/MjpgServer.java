@@ -128,7 +128,7 @@ public class MjpgServer {
     private MjpgServer() {
         try {
             initFromAssets(AppContext.getDefaultContext());
-            mServerSocket = new ServerSocket(5800);
+            mServerSocket = new ServerSocket(5800);//TODO: Change this to the port Dillon wants.
             mRunning = true;
             mRunThread = new Thread(runner);
             mRunThread.start();

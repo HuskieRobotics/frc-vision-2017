@@ -24,6 +24,7 @@ struct TargetInfo {
   double centroid_y;
   double width;
   double height;
+  double leftToRightRatio;
   bool isGeneratedPair;
   cv::Rect box;
   std::vector<cv::Point> contour;
@@ -78,12 +79,13 @@ std::vector<TargetInfo> processImpl(int w, int h, int texOut, DisplayMode mode,
 
       target.width = target.box.width;
       target.height = target.box.height;
+      target.leftToRightRatio = 0;
 
       // Filter based on size
       // Keep in mind width/height are in imager terms...
       const double kMinTargetWidth = 4;
       const double kMaxTargetWidth = 250;
-      const double kMinTargetHeight = 8;
+      const double kMinTargetHeight = 5;
       const double kMaxTargetHeight = 250;
       if (target.width < kMinTargetWidth || target.width > kMaxTargetWidth ||
         target.height < kMinTargetHeight ||
@@ -94,7 +96,7 @@ std::vector<TargetInfo> processImpl(int w, int h, int texOut, DisplayMode mode,
       }
       // Filter based on expected proportions
       const double kVertOverHorizontalMax = 6.0;
-      const double kVertOverHorizontalMin = 0.4;//2.0 for a full target, .5 for a possibly split target
+      const double kVertOverHorizontalMin = 0.3;//2.0 for a full target, .3 for a possibly split target
 
       double actualVertOverHorizontal = target.height/target.width;
 
@@ -191,12 +193,12 @@ std::vector<TargetInfo> processImpl(int w, int h, int texOut, DisplayMode mode,
       {
         altitude_err_top = double(std::abs(target1.box.tl().y - target2.box.tl().y)) / double(std::max(target1.height, target2.height));
         altitude_err_bottom = double(std::abs(target1.box.br().y - target2.box.br().y)) / double(std::max(target1.height, target2.height));
-        LOGE("Altitude Err: %.2lf, %.2lf", altitude_err_top, altitude_err_bottom);
+        LOGD("Altitude Err: %.2lf, %.2lf", altitude_err_top, altitude_err_bottom);
         if (altitude_err_top < kAltMaxError && altitude_err_bottom < kAltMaxError)// If bottom and top of boxes align within 12.5%
         {
           max_height = std::max(target1.box.br().y, target2.box.br().y) - std::min(target1.box.tl().y, target2.box.tl().y);//max_height = max(target1.top, target2.top) - min(target1.bottom, target2.bottom);
           width = std::abs(target1.centroid_x - target2.centroid_x);
-          LOGE("max_height: %.2lf, width: %.2lf", max_height, width);
+          LOGD("max_height: %.2lf, width: %.2lf", max_height, width);
           if ((0.5*max_height)<width && width < (2.25*max_height) ) //if (width in range(.5*max_height, 1.75*max_height)
           {
             TargetInfo full_target;//Generate combined target
@@ -205,10 +207,17 @@ std::vector<TargetInfo> processImpl(int w, int h, int texOut, DisplayMode mode,
             full_target.width = full_target.box.width;
             full_target.centroid_x = full_target.box.x + (full_target.box.width/2);
             full_target.centroid_y = full_target.box.y + (full_target.box.height/2);
-
+            if (target1.box.x < target2.box.x) //Is target1 on the left?
+            {
+                full_target.leftToRightRatio = target1.box.area() * 1.0 / target2.box.area();
+            }
+            else
+            {
+                full_target.leftToRightRatio = target2.box.area() * 1.0 / target1.box.area();
+            }
             targets.push_back(std::move(full_target));// We found a target
-            LOGD("Found target at %.2lf, %.2lf...size %.2lf, %.2lf",
-            full_target.centroid_x, full_target.centroid_y, full_target.width, full_target.height);//*/
+            LOGE("Found target at %.2lf, %.2lf...size %.2lf, %.2lf... ratio %.2lf",
+            full_target.centroid_x, full_target.centroid_y, full_target.width, full_target.height, full_target.leftToRightRatio);//*/
           }
         }
       }
@@ -285,6 +294,7 @@ static jfieldID sCentroidXField;
 static jfieldID sCentroidYField;
 static jfieldID sWidthField;
 static jfieldID sHeightField;
+static jfieldID sLeftToRightRatioField;
 
 static void ensureJniRegistered(JNIEnv *env) {
   if (sFieldsRegistered) {
@@ -304,6 +314,7 @@ static void ensureJniRegistered(JNIEnv *env) {
   sCentroidYField = env->GetFieldID(targetClass, "centroidY", "D");
   sWidthField = env->GetFieldID(targetClass, "width", "D");
   sHeightField = env->GetFieldID(targetClass, "height", "D");
+  sLeftToRightRatioField = env->GetFieldID(targetClass, "leftToRightRatio", "D");
 }
 
 extern "C" void processFrame(JNIEnv *env, int tex1, int tex2, int w, int h,
@@ -328,5 +339,6 @@ extern "C" void processFrame(JNIEnv *env, int tex1, int tex2, int w, int h,
     env->SetDoubleField(targetObject, sCentroidYField, target.centroid_y);
     env->SetDoubleField(targetObject, sWidthField, target.width);
     env->SetDoubleField(targetObject, sHeightField, target.height);
+    env->SetDoubleField(targetObject, sLeftToRightRatioField, target.leftToRightRatio);
   }
 }
