@@ -43,7 +43,7 @@ public class MjpgServer {
         }
     }
 
-    private static MjpgServer getInstance() {
+    public static MjpgServer getInstance() {
         if (sInst == null) {
             sInst = new MjpgServer();
         }
@@ -129,7 +129,7 @@ public class MjpgServer {
         try {
             Log.e("MjpgServer", "Attempting to get socket 5800");
             initFromAssets(AppContext.getDefaultContext());
-            mServerSocket = new ServerSocket(5800);//TODO: Change this to the port Dillon wants.
+            mServerSocket = new ServerSocket(5800);
             mRunning = true;
             mRunThread = new Thread(runner);
             mRunThread.start();

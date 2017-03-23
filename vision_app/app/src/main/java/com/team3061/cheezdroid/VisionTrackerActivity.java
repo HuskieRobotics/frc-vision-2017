@@ -212,7 +212,7 @@ public class VisionTrackerActivity extends Activity implements RobotConnectionSt
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        //MjpgServer.getInstance().initFromAssets(this);
+        MjpgServer.getInstance().initFromAssets(this);
 
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
