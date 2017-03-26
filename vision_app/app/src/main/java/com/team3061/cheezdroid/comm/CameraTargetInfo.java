@@ -50,10 +50,10 @@ public class CameraTargetInfo {
     public JSONObject toJson() {
         JSONObject j = new JSONObject();
         try {
-            j.put("x", doubleize(getX()));
+            j.put("x", getX());
             j.put("y", doubleize(getY()));
             j.put("z", doubleize(getZ()));
-            j.put("theta", doubleize(getTheta()));
+            j.put("theta", getTheta());
         } catch (JSONException e) {
             Log.e("CameraTargetInfo", "Could not encode Json");
         }

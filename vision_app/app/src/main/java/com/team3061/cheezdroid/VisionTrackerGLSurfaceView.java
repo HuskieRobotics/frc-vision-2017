@@ -141,7 +141,7 @@ public class VisionTrackerGLSurfaceView extends BetterCameraGLSurfaceView implem
             NativePart.TargetsInfo.Target target = targetsInfo.targets[i];
 
             // Convert to a homogeneous 3d vector with x = 1
-            double x = 1; //TODO: Find a way to measure x as a distance!
+            double x = 5128.205128 / target.width ; //TODO: Find a way to measure x as a distance and as a function of location!
             double y = -(target.centroidX - kCenterCol) / getFocalLengthPixels();
             double z = (target.centroidY - kCenterRow) / getFocalLengthPixels();
 
