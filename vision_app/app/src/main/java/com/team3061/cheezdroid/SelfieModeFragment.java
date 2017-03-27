@@ -276,7 +276,7 @@ public class SelfieModeFragment extends Fragment
             int quality = 20; //set quality
             yuvImage.compressToJpeg(new Rect(0, 0, width, height), quality, baos);
             byte[] jpgBytes = baos.toByteArray();
-            //MjpgServer.getInstance().update(jpgBytes);
+            MjpgServer.getInstance().update(jpgBytes);
             t = now;
         }
     }
@@ -493,7 +493,7 @@ public class SelfieModeFragment extends Fragment
 
                 // We don't use a front facing camera in this sample.
                 Integer facing = characteristics.get(CameraCharacteristics.LENS_FACING);
-                if (facing != null && facing == CameraCharacteristics.LENS_FACING_BACK) {
+                if (facing != null && facing == CameraCharacteristics.LENS_FACING_FRONT) {
                     Log.w(TAG, "Skipped for facing " + cameraId);
                     continue;
                 }

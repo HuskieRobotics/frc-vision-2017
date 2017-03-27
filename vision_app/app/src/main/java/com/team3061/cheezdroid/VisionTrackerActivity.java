@@ -82,12 +82,12 @@ public class VisionTrackerActivity extends Activity implements RobotConnectionSt
 
     @Override
     public void wantsIntakeMode() {
-//        if (mIsRunning && (System.currentTimeMillis() - mLastSelfieLaunch > 1000)) {
-//            Intent i = new Intent();
-//            i.setClass(VisionTrackerActivity.this, SelfieActivity.class);
-//            mLastSelfieLaunch = System.currentTimeMillis();
-//            startActivity(i);
-//        }
+        if (mIsRunning && (System.currentTimeMillis() - mLastSelfieLaunch > 1000)) {
+            Intent i = new Intent();
+            i.setClass(VisionTrackerActivity.this, SelfieActivity.class);
+            mLastSelfieLaunch = System.currentTimeMillis();
+            startActivity(i);
+        }
     }
 
     private class PowerStateBroadcastReceiver extends BroadcastReceiver {
