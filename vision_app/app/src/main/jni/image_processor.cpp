@@ -224,7 +224,7 @@ std::vector<TargetInfo> processImpl(int w, int h, int texOut, DisplayMode mode,
     }
 
     //TODO: Remove this section
-    TargetInfo full_target2;//Generate combined target
+    /*TargetInfo full_target2;//Generate combined target
     full_target2.box = cv::Rect(10,10,40,40); //Rectangle that encloses both smaller rects
     full_target2.height = full_target2.box.height;
     full_target2.width = full_target2.box.width;
@@ -232,7 +232,7 @@ std::vector<TargetInfo> processImpl(int w, int h, int texOut, DisplayMode mode,
     full_target2.centroid_y = full_target2.box.y + (full_target2.box.height/2);
 
     targets.push_back(std::move(full_target2));// We found a target
-
+    */
 
   // write back
   t = getTimeMs();
