@@ -26,6 +26,7 @@ for line in f.readlines():
 f.close()
 
 f = open(sys.argv[1] + ".csv", "w")
+f.write("x,y,width,height,WcalcZ,HcalcZ\n")
 for pt in data:
   f.write(str(pt)[1:-1] + "\n")
   
