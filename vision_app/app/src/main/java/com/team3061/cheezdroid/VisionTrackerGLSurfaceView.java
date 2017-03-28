@@ -45,7 +45,7 @@ public class VisionTrackerGLSurfaceView extends BetterCameraGLSurfaceView implem
         settings.width = kWidth;
         settings.camera_settings = new HashMap<>();
         settings.camera_settings.put(CaptureRequest.CONTROL_MODE, CaptureRequest.CONTROL_MODE_OFF);
-        settings.camera_settings.put(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_OFF);
+        settings.camera_settings.put(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON);//TODO: only use while using FLASH_MODE_TORCH on the Galaxy ON5
         settings.camera_settings.put(CaptureRequest.FLASH_MODE, CaptureRequest.FLASH_MODE_TORCH);
         settings.camera_settings.put(CaptureRequest.CONTROL_AWB_MODE, CaptureRequest.CONTROL_AWB_MODE_INCANDESCENT);
         settings.camera_settings.put(CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE, CaptureRequest.CONTROL_VIDEO_STABILIZATION_MODE_OFF);
@@ -140,10 +140,10 @@ public class VisionTrackerGLSurfaceView extends BetterCameraGLSurfaceView implem
         for (int i = 0; i < targetsInfo.numTargets; ++i) {
             NativePart.TargetsInfo.Target target = targetsInfo.targets[i];
 
-            // Convert to a homogeneous 3d vector with x = 1
-            double x = 5128.205128 / target.width ; //TODO: Find a way to measure x as a distance and as a function of location!
+            double x = 6329.113924 / target.width ;
             double y = -(target.centroidX - kCenterCol) / getFocalLengthPixels();
             double z = (target.centroidY - kCenterRow) / getFocalLengthPixels();
+            x = x-((target.centroidX - kCenterCol)*(target.centroidX - kCenterCol)*3.733e-04)-((target.centroidY - kCenterRow)*(target.centroidY - kCenterRow)*3.733e-04);
 
             double theta = target.leftToRightRatio; //TODO: This isn't true!!!!! Need to make an algorithm to calculate the actual angle!
             Log.i(LOGTAG, "Target at: " + y + ", " + z);
