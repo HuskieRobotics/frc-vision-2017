@@ -48,7 +48,7 @@ public class VisionTrackerActivity extends Activity implements RobotConnectionSt
     private static final int REQUEST_CAMERA_PERMISSION = 1;
     private static final String FRAGMENT_DIALOG = "dialog";
 
-    private static boolean sLocked = false;
+    private static boolean sLocked = true;
 
     private VisionTrackerGLSurfaceView mView;
     private TextView mProcMode;
