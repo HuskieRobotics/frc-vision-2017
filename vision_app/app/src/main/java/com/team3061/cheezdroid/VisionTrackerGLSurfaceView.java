@@ -143,10 +143,10 @@ public class VisionTrackerGLSurfaceView extends BetterCameraGLSurfaceView implem
             double x = 6329.113924 / target.width ;
             double y = -(target.centroidX - kCenterCol) / getFocalLengthPixels();
             double z = (target.centroidY - kCenterRow) / getFocalLengthPixels();
-            x = x-((target.centroidX - kCenterCol)*(target.centroidX - kCenterCol)*3.733e-04)-((target.centroidY - kCenterRow)*(target.centroidY - kCenterRow)*3.733e-04);
-
+            //x = x-((target.centroidX - kCenterCol)*(target.centroidX - kCenterCol)*3.733e-04)-((target.centroidY - kCenterRow)*(target.centroidY - kCenterRow)*3.733e-04);
+            //TODO: This algorithm doesn't work. It appears that the distance depends on the width and the location, but the width+location are not able to be calculated independently.
             double theta = target.leftToRightRatio; //TODO: This isn't true!!!!! Need to make an algorithm to calculate the actual angle!
-            Log.i(LOGTAG, "Target at: " + y + ", " + z);
+            Log.i(LOGTAG, "Target at: " + y + ", " + z + " d:" + x + " in");
             visionUpdate.addCameraTargetInfo(
                     new CameraTargetInfo(x, y, z, theta));
         }
