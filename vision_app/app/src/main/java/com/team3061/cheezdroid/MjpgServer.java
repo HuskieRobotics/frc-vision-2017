@@ -127,7 +127,6 @@ public class MjpgServer {
 
     private MjpgServer() {
         try {
-            Log.e("MjpgServer", "Attempting to get socket 5800");
             initFromAssets(AppContext.getDefaultContext());
             mServerSocket = new ServerSocket(5800);
             mRunning = true;
@@ -189,9 +188,9 @@ public class MjpgServer {
         public void run() {
             while (mRunning) {
                 try {
-                    Log.e(TAG, "Waiting for connections");
+                    Log.i(TAG, "Waiting for connections");
                     Socket s = mServerSocket.accept();
-                    Log.e("MjpgServer", "Got a socket: " + s);
+                    Log.i("MjpgServer", "Got a socket: " + s);
                     Connection c = new Connection(s);
                     synchronized (mLock) {
                         mConnections.add(c);

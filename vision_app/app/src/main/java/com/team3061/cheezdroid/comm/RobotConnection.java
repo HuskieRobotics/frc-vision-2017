@@ -166,9 +166,8 @@ public class RobotConnection {
             try {
                 m_socket = new Socket(m_host, m_port);
                 m_socket.setSoTimeout(100);
-                Log.e("RobotConnector", "YAY connect");
             } catch (IOException e) {
-                Log.e("RobotConnector", "Could not connect");
+                Log.w("RobotConnector", "Could not connect");
                 m_socket = null;
             }
         }
