@@ -223,17 +223,6 @@ std::vector<TargetInfo> processImpl(int w, int h, int texOut, DisplayMode mode,
       }
     }
 
-    //TODO: Remove this section
-    /*TargetInfo full_target2;//Generate combined target
-    full_target2.box = cv::Rect(10,10,40,40); //Rectangle that encloses both smaller rects
-    full_target2.height = full_target2.box.height;
-    full_target2.width = full_target2.box.width;
-    full_target2.centroid_x = full_target2.box.x + (full_target2.box.width/2);
-    full_target2.centroid_y = full_target2.box.y + (full_target2.box.height/2);
-
-    targets.push_back(std::move(full_target2));// We found a target
-    */
-
   // write back
   t = getTimeMs();
   static cv::Mat vis;
